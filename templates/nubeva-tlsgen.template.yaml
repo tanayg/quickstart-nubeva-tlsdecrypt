@@ -206,16 +206,21 @@ Resources:
                   docker run -v /:/host -v /var/run/docker.sock:/var/run/docker.sock --cap-add NET_ADMIN --cap-add SYS_ADMIN --cap-add SYS_RESOURCE --cap-add SYS_PTRACE --name nubeva-agent -d --restart=always --net=host nubeva/nuagent --accept-eula --nutoken ${APIKey}
         StartTLSGenerator:
           commands:
-            01_createDirectory:
-              command: "mkdir /opt/nubevaTools"
-            01_installscript:
-              command: "wget -nv https://raw.githubusercontent.com/nubevalabs/NubevaTools/master/awsGenerateTLS.sh -O /opt/nubevaTools/awsGenerateTLS.sh"
-            03_allowExecute:
-              command: "chmod +x /opt/nubevaTools/awsGenerateTLS.sh"
-            04_startTLSgen:
-              command: "/opt/nubevaTools/awsGenerateTLS.sh > dev/null 2>&1 &"
-            05_addintrclocal:
-              command: "echo '/opt/nubevaTools/awsGenerateTLS.sh > dev/null 2>&1 &' >> /etc/rc.local"
+            # Does cron come installed with AWS Linux?
+            01_pulltlsgenimage:
+              command: "docker pull nubevalab/tlsgenerator:latest"
+            02_createcronjob:
+              command: "(crontab -l ; echo \"* * * * * docker run nubevalab/tlsgenerator:latest\") | crontab -"
+            #01_createDirectory:
+            #  command: "mkdir /opt/nubevaTools"
+            #01_installscript:
+            #  command: "wget -nv https://raw.githubusercontent.com/nubevalabs/NubevaTools/master/awsGenerateTLS.sh -O /opt/nubevaTools/awsGenerateTLS.sh"
+            #03_allowExecute:
+            #  command: "chmod +x /opt/nubevaTools/awsGenerateTLS.sh"
+            #04_startTLSgen:
+            #  command: "/opt/nubevaTools/awsGenerateTLS.sh > dev/null 2>&1 &"
+            #05_addintrclocal:
+            #  command: "echo '/opt/nubevaTools/awsGenerateTLS.sh > dev/null 2>&1 &' >> /etc/rc.local"
     Properties:
       UserData:
         Fn::Base64: !Sub |
